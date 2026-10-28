@@ -1,16 +1,17 @@
-// Array global que armazenará os produtos cadastrados
+
 const listaDeProdutos = [];
+
+
+let indiceEdicao = null;
 
 // =========================================================================
 // DESAFIO 1: Classe Produto com Encapsulamento Privado (#) e Validações
 // =========================================================================
 class Produto {
-    // Declaração obrigatória de atributos privados no JavaScript
     #preco;
     #quantidade;
 
     constructor(nome, preco, quantidade) {
-        // Validações exigidas pelas regras de negócio
         if (!nome || nome.trim() === "") {
             throw new Error("O nome do produto não pode estar vazio.");
         }
@@ -21,13 +22,11 @@ class Produto {
             throw new Error("A quantidade de itens deve ser maior que zero.");
         }
 
-        // Atribuição das propriedades
         this.nome = nome;
         this.#preco = preco;
         this.#quantidade = quantidade;
     }
 
-    // Getters públicos para permitir que o sistema leia os valores protegidos
     get preco() {
         return this.#preco;
     }
@@ -36,7 +35,6 @@ class Produto {
         return this.#quantidade;
     }
 
-    // Getter dinâmico para calcular o subtotal de forma segura
     get subtotal() {
         return this.#preco * this.#quantidade;
     }
@@ -45,32 +43,26 @@ class Produto {
 // Mapeamento de elementos do DOM
 const form = document.getElementById("produto-form");
 const tabelaCorpo = document.querySelector("#tabela-produtos tbody");
+const botaoSubmit = form.querySelector("button[type='submit']");
 
-// =========================================================================
-// DESAFIO 2: Indicadores Financeiros do Estoque (.reduce())
-// =========================================================================
+
 function atualizarTotalEstoque() {
-    // Acumula o subtotal de todos os produtos do array
     const valorTotal = listaDeProdutos.reduce((acumulador, produto) => {
         return acumulador + produto.subtotal;
     }, 0);
 
-    // Formata o valor final para a moeda padrão brasileira (R$)
     const totalFormatado = valorTotal.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
 
-    // Atualiza o elemento de texto no HTML
     document.getElementById("total-estoque").innerText = `Total em Estoque: ${totalFormatado}`;
 }
 
-// Função auxiliar para renderizar a tabela na tela
+
 function renderizarTabela() {
-    // Limpa as linhas existentes para evitar duplicados
     tabelaCorpo.innerHTML = "";
 
-    // Percorre a lista criando a estrutura HTML de cada linha
     listaDeProdutos.forEach((produto, index) => {
         const linha = document.createElement("tr");
 
@@ -80,6 +72,7 @@ function renderizarTabela() {
             <td>${produto.quantidade}</td>
             <td>${produto.subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
             <td>
+                <button class="btn-editar" onclick="prepararEdicao(${index})">Editar</button>
                 <button class="btn-remover" onclick="removerProduto(${index})">Remover</button>
             </td>
         `;
@@ -87,48 +80,91 @@ function renderizarTabela() {
         tabelaCorpo.appendChild(linha);
     });
 
-    // Mantém o valor global do estoque atualizado
     atualizarTotalEstoque();
 }
 
-// =========================================================================
-// DESAFIO 3: Gestão Dinâmica (Remoção Individual e Limpeza Total)
-// =========================================================================
 
-// Remove um produto individual usando o índice do Array
+
+function resetarModoInclusao() {
+    indiceEdicao = null;
+    botaoSubmit.innerText = "Adicionar Produto";
+    form.reset();
+}
+
+
+function prepararEdicao(index) {
+    const produto = listaDeProdutos[index];
+
+    document.getElementById("nome").value = produto.nome;
+    document.getElementById("preco").value = produto.preco;
+    document.getElementById("quantidade").value = produto.quantidade;
+
+    indiceEdicao = index;
+    botaoSubmit.innerText = "Salvar Alterações";
+
+    document.getElementById("nome").focus();
+}
+
+
 function removerProduto(index) {
     listaDeProdutos.splice(index, 1);
+
+
+    if (indiceEdicao !== null) {
+        if (indiceEdicao === index) {
+            resetarModoInclusao();
+        } else if (indiceEdicao > index) {
+            indiceEdicao--;
+        }
+    }
+
     renderizarTabela();
 }
 
-// Evento do botão de limpar tudo
+
 document.getElementById("limpar-tabela").addEventListener("click", () => {
-    listaDeProdutos.length = 0; // Esvazia o array original
+    listaDeProdutos.length = 0;
+    resetarModoInclusao();
     renderizarTabela();
 });
 
-// Evento de envio do formulário (Desafio 1 - Try/Catch)
+
 form.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    // Captura os valores digitados
-    const nome = document.getElementById("nome").value;
+
+    const nome = document.getElementById("nome").value.trim();
     const preco = parseFloat(document.getElementById("preco").value);
     const quantidade = parseInt(document.getElementById("quantidade").value);
 
+
+    if (nome === "") {
+        alert("O nome do produto não pode estar vazio.");
+        return;
+    }
+    if (isNaN(preco) || preco <= 0) {
+        alert("O preço deve ser um número válido maior que zero.");
+        return;
+    }
+    if (isNaN(quantidade) || quantidade <= 0) {
+        alert("A quantidade deve ser um número válido maior que zero.");
+        return;
+    }
+
     try {
-        // Tenta criar a instância da classe Produto (Ativa as validações do constructor)
         const novoProduto = new Produto(nome, preco, quantidade);
-        
-        // Se passar nas validações, adiciona e atualiza a interface
-        listaDeProdutos.push(novoProduto);
+
+        if (indiceEdicao === null) {
+
+            listaDeProdutos.push(novoProduto);
+        } else {
+            listaDeProdutos[indiceEdicao] = novoProduto;
+        }
+
+        resetarModoInclusao();
         renderizarTabela();
-        
-        // Reseta os campos digitados no formulário
-        form.reset();
 
     } catch (error) {
-        // Caso ocorra um throw new Error(...), exibe no alert sem quebrar o app
         alert(error.message);
     }
 });
