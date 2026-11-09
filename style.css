@@ -172,3 +172,30 @@ tbody tr:nth-child(even) {
 .btn-remover:hover {
     background-color: #dc2626;
 }
+
+.sugestoes-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 0 4px 4px;
+    list-style: none;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sugestoes-dropdown li {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.sugestoes-dropdown li:hover {
+    background-color: #f8fafc;
+    color: #1a50c5;
+}

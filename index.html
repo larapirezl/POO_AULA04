@@ -10,15 +10,18 @@
     <div class="container">
         <img src="logo.png" alt="" width="150px">
         <h1>Cadastro de Produtos</h1>
-        <h4 class="nome">Lara Pires - DS 2ª<h4>
-        
+
+            <h4 class="nome">Lara Pires - DS 2ª</h4>
 
 
         <!-- Formulário de Entrada -->
         <form id="produto-form">
-            <div class="form-group">
+
+            <div class="form-group" style="position: relative;">
                 <label for="nome">Nome do produto:</label>
-                <input type="text" id="nome" placeholder="Ex. Notebook" required />
+                <input type="text" id="nome" placeholder="Ex. Notebook" autocomplete="off" required />
+                <!-- Lista suspensa de sugestões -->
+                <ul id="sugestoes-lista" class="sugestoes-dropdown"></ul>
             </div>
 
             <div class="form-group">
@@ -33,6 +36,11 @@
 
             <button type="submit" class="btn-primary">Adicionar Produto</button>
         </form>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="filtro-pesquisa">Pesquisar produto:</label>
+            <input type="text" id="filtro-pesquisa" placeholder="Digite para filtrar..." />
+        </div>
 
         <!-- Cabeçalho de Ações e Resumo -->
         <div class="resumo-container">

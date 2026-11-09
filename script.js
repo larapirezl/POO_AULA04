@@ -1,7 +1,4 @@
-
 const listaDeProdutos = [];
-
-
 let indiceEdicao = null;
 
 // =========================================================================
@@ -40,14 +37,27 @@ class Produto {
     }
 }
 
-// Mapeamento de elementos do DOM
+
 const form = document.getElementById("produto-form");
 const tabelaCorpo = document.querySelector("#tabela-produtos tbody");
 const botaoSubmit = form.querySelector("button[type='submit']");
+const inputPesquisa = document.getElementById("filtro-pesquisa");
 
+const inputNome = document.getElementById("nome");
+const listaSugestoes = document.getElementById("sugestoes-lista");
+
+function obterProdutosFiltrados() {
+    const termo = inputPesquisa.value.toLowerCase();
+    return listaDeProdutos.filter(produto => 
+        produto.nome.toLowerCase().includes(termo)
+    );
+}
 
 function atualizarTotalEstoque() {
-    const valorTotal = listaDeProdutos.reduce((acumulador, produto) => {
+    
+    const produtosVisiveis = obterProdutosFiltrados();
+
+    const valorTotal = produtosVisiveis.reduce((acumulador, produto) => {
         return acumulador + produto.subtotal;
     }, 0);
 
@@ -59,11 +69,15 @@ function atualizarTotalEstoque() {
     document.getElementById("total-estoque").innerText = `Total em Estoque: ${totalFormatado}`;
 }
 
-
 function renderizarTabela() {
     tabelaCorpo.innerHTML = "";
 
-    listaDeProdutos.forEach((produto, index) => {
+    const produtosVisiveis = obterProdutosFiltrados();
+
+    produtosVisiveis.forEach((produto) => {
+        // Encontra o índice real do produto na lista original para manter as ações corretas
+        const indexReal = listaDeProdutos.indexOf(produto);
+
         const linha = document.createElement("tr");
 
         linha.innerHTML = `
@@ -72,8 +86,8 @@ function renderizarTabela() {
             <td>${produto.quantidade}</td>
             <td>${produto.subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
             <td>
-                <button class="btn-editar" onclick="prepararEdicao(${index})">Editar</button>
-                <button class="btn-remover" onclick="removerProduto(${index})">Remover</button>
+                <button class="btn-editar" onclick="prepararEdicao(${indexReal})">Editar</button>
+                <button class="btn-remover" onclick="removerProduto(${indexReal})">Remover</button>
             </td>
         `;
 
@@ -83,32 +97,27 @@ function renderizarTabela() {
     atualizarTotalEstoque();
 }
 
-
-
 function resetarModoInclusao() {
     indiceEdicao = null;
     botaoSubmit.innerText = "Adicionar Produto";
     form.reset();
 }
 
-
 function prepararEdicao(index) {
     const produto = listaDeProdutos[index];
 
-    document.getElementById("nome").value = produto.nome;
+    inputNome.value = produto.nome;
     document.getElementById("preco").value = produto.preco;
     document.getElementById("quantidade").value = produto.quantidade;
 
     indiceEdicao = index;
     botaoSubmit.innerText = "Salvar Alterações";
 
-    document.getElementById("nome").focus();
+    inputNome.focus();
 }
-
 
 function removerProduto(index) {
     listaDeProdutos.splice(index, 1);
-
 
     if (indiceEdicao !== null) {
         if (indiceEdicao === index) {
@@ -121,7 +130,6 @@ function removerProduto(index) {
     renderizarTabela();
 }
 
-
 document.getElementById("limpar-tabela").addEventListener("click", () => {
     listaDeProdutos.length = 0;
     resetarModoInclusao();
@@ -129,14 +137,50 @@ document.getElementById("limpar-tabela").addEventListener("click", () => {
 });
 
 
+inputPesquisa.addEventListener("input", () => {
+    renderizarTabela();
+});
+
+
+inputNome.addEventListener("input", () => {
+    const digitado = inputNome.value.toLowerCase().trim();
+    if (listaSugestoes) {
+        listaSugestoes.innerHTML = "";
+
+        if (digitado === "") return;
+
+        const sugestoes = listaDeProdutos.filter(produto => 
+            produto.nome.toLowerCase().includes(digitado)
+        );
+
+        sugestoes.forEach(produto => {
+            const itemLi = document.createElement("li");
+            itemLi.innerText = `${produto.nome} (R$ ${produto.preco.toFixed(2)} - Qtd: ${produto.quantidade})`;
+            
+            itemLi.addEventListener("click", () => {
+                inputNome.value = produto.nome;
+                document.getElementById("preco").value = produto.preco;
+                document.getElementById("quantidade").value = produto.quantidade;
+                listaSugestoes.innerHTML = "";
+            });
+
+            listaSugestoes.appendChild(itemLi);
+        });
+    }
+});
+
+document.addEventListener("click", (e) => {
+    if (listaSugestoes && !inputNome.contains(e.target) && !listaSugestoes.contains(e.target)) {
+        listaSugestoes.innerHTML = "";
+    }
+});
+
 form.addEventListener("submit", (event) => {
     event.preventDefault();
 
-
-    const nome = document.getElementById("nome").value.trim();
+    const nome = inputNome.value.trim();
     const preco = parseFloat(document.getElementById("preco").value);
     const quantidade = parseInt(document.getElementById("quantidade").value);
-
 
     if (nome === "") {
         alert("O nome do produto não pode estar vazio.");
@@ -155,7 +199,6 @@ form.addEventListener("submit", (event) => {
         const novoProduto = new Produto(nome, preco, quantidade);
 
         if (indiceEdicao === null) {
-
             listaDeProdutos.push(novoProduto);
         } else {
             listaDeProdutos[indiceEdicao] = novoProduto;
